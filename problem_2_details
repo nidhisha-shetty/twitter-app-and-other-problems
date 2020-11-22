@@ -1,0 +1,98 @@
+1) What technologies would you use to build out this platform? Please tell us the
+languages, databases, tools / servers you would use to build out the above platform.
+-
+a) Frontend: Bootstrap, JQuery, AJAX, Javascript, Gulp, Jinja2, CSS
+
+b) Databases: 
+- MySQL:
+- Redis: can be used for two purposes:
+i) caching
+ii) flushing the tweets data from MySQL database after 60-90 days and storing that
+dump in Redis for managing and storing historical tweets and other meta data. 
+
+Redis will also use Master-Slave replication to ensure that there are multiple instances
+storing the same historical data to ensure data reliability.
+
+c) Backend: 
+- Django web framework
+- Django Rest Framework for exposing APIs of the application to external developers
+
+d) Version control: Git
+
+e) Messaging Queues:
+- RabbitMQ
+- Celery
+
+f) Analytics and reporting: Google Analytics
+
+g) Server Deployment
+- Amazon Web Services: Elastic Beanstalk for cloud hosting
+- nginx: will act as the web server and reverse-proxy
+- Gunicorn: will serve dynamic content and acting as an interface between nginx and Django backend
+
+------------------------------------------------------------------------------------------------
+
+2) Write the schema of your database that is going to store the data. We want to see this in
+detail to see where the all the different information will be stored.
+- 
+<<<< MySQL >>>>
+
+User (user-level information):
+- user_id
+- username/handle
+- email
+- first_name
+- last_name
+- password
+- user_status (1-active,2-banned,3-deleted,4-admin,etc)
+- last_login_datetime
+- location
+- ip_address
+- followers_count
+- following_count
+- profile_bio
+- last_updated_datetime
+- created_datetime
+
+User_Tweets (user-wise tweets data):
+- tweet_id
+- author_id (user_id reference from User table)
+- tweet_body
+- retweet_count
+- likes_count
+- replies_count
+- is_deleted (boolean)
+- is_retweeted (boolean)
+- published_datetime
+
+Followers_Data (storing followed-follower relationship data)
+- fd_id
+- followed_user_id (user_id reference from User table)
+- follower_user_id (user_id reference from User table)
+- is_relationship_active (boolean)
+- created_datetime
+
+<<<< Redis >>>>
+- Redis' primary responsibility will be to store historical tweets data. After every 60-90 days,
+I will run a process which will take a backup of the User_Tweets MySQL table, flush the data from
+MySQL and dump it in Redis. This will be done to ensure that the primary MySQL database only
+stores the latest tweets data for ready access on user's timelines. Also, this will improve
+the performance of the MySQL database, thereby improving the speed and performance of
+other heavy-duty processes.
+
+--------------------------------------------------------------------------------------------
+
+4) How much can the system you have built scale up to? What are the limiting factors of
+your system and when will it start failing?
+
+- The current system can scale upto a few thousand users. However, as the number of users increases the complexity of the
+architecture increases, we would need to address the following
+issues/shortcomings of our current system:
+a) deployment process: Once the application is thriving, we would have to make use of containers using
+Docker to automate and enhance our deployment process.
+b) load balancing: In order to factor for high traffic, we would have to use services like
+Elastic Load Balancing to distribute traffic/incoming requests efficiently across multiple servers
+c) pricing: as the traffic and load increases, we might have to bear the ever-increasing costs of
+Amazon Web Services which would affect the company from a business standpoint. A solution to this
+would be to build our own in-house server infrastructure, which comparably would be cheaper than
+using a third-party cloud hosting service.
